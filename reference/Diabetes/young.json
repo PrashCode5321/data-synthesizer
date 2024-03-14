@@ -1,0 +1,46 @@
+{
+    "STAGE-1": {
+        "Name": "No Diabetes",
+        "Urea": {"mean": 14.13, "std": 3.11},
+        "Cr": {"mean": 0.81, "std": 0.18},
+        "HbA1c": {"mean": 5.1, "std": 0.15},
+        "BGL": {"mean": 110, "std": 17},
+        "PPBG": {"mean":120, "std": 15},
+        "Chol": {"mean": 174.46, "std": 6.9},
+        "TG": {"mean": 67.8, "std": 27.4},
+        "HDL": {"mean": 59.6, "std": 19.6},
+        "LDL": {"mean": 96.4, "std": 26.8},
+        "VLDL": {"mean": 16.04, "std": 1.13},
+        "BMI": {"mean": 19.6, "std": 4.6}
+    },
+
+    "STAGE-2": {
+        "Name": "Pre-Diabetes",
+        "Urea": {"mean": 17.18, "std": 4.39},
+        "Cr": {"mean": 0.9, "std": 0.27},
+        "HbA1c": {"mean": 5.8, "std": 0.25},
+        "BGL": {"mean": 130, "std": 22},
+        "PPBG": {"mean":150, "std": 17.5},
+        "Chol": {"mean": 179.32, "std": 19.4},
+        "TG": {"mean": 82.9, "std": 23.1},
+        "HDL": {"mean": 55.25, "std": 20.25},
+        "LDL": {"mean": 96.4, "std": 26.8},
+        "VLDL": {"mean": 20.8, "std": 3.06},
+        "BMI": {"mean": 21.6, "std": 6.05}
+    },
+
+    "STAGE-3": {
+        "Name": "Diabetes",
+        "Urea": {"mean": 20.23, "std": 5.67},
+        "Cr": {"mean": 0.99, "std": 0.36},
+        "HbA1c": {"mean": 6.5, "std": 0.35},
+        "BGL": {"mean": 150, "std": 27},
+        "PPBG": {"mean":180, "std": 20},
+        "Chol": {"mean": 184.17, "std": 31.89},
+        "TG": {"mean": 98.0, "std": 28.8},
+        "HDL": {"mean": 50.9, "std": 20.9},
+        "LDL": {"mean": 96.4, "std": 26.8},
+        "VLDL": {"mean": 30, "std": 5},
+        "BMI": {"mean": 23.6, "std": 7.5}
+    }
+}
