@@ -1,6 +1,6 @@
 from forecast import predict_diabetic_risk
 from datetime import datetime, timedelta
-from support import generate_data
+from support import data_synthesizer
 from datetime import datetime
 from fastapi import FastAPI
 import pandas as pd
@@ -39,21 +39,18 @@ async def data_generator(input_data: dict, samples: int,
         random_date = f'2024-{random.randint(1, 12)}-{random.randint(1, 28)}'
         end_date = input_data.get("Date", random_date)
         end_date = datetime.strptime(end_date, '%Y-%m-%d')
+                 
+        # determine the age group for fetching correct confidence intervals
+        path = f"reference\\{disease}.json"
         logger.info('Patient age is %s and current health status is %s', 
                     age, stage)
         
-        # determine the age group for fetching correct confidence intervals
-        path = os.path.join('reference',f'{disease}','young.json') \
-                if age in range(18, 31) else \
-                    os.path.join('reference',f'{disease}','middle.json') \
-                        if age in range(31, 46) else \
-                            os.path.join('reference',f'{disease}','old.json')
-        
         # fetching confidence intervals of all parameters per stage
         with open(path) as f:
-            dictt = json.load(f)
+            disease_ref = json.load(f)
 
         # encoding the disease stage to 1/2/3/4...
+        dictt = next(iter(disease_ref.values()))
         stage_code = [int(k.split('-')[-1]) for k, v in dictt.items()\
                        if v.get('Name') == stage]
         assert len(stage_code) != 0
@@ -70,7 +67,7 @@ async def data_generator(input_data: dict, samples: int,
                   
         # regressing the dates with monthly freqeuncy
         dates = [(end_date - timedelta(days=delta)).date() \
-                 for delta in range(30, 30*(adj_size*stage_code+1), 30)]
+                 for delta in range(0, 30*(adj_size*stage_code+1), 30)]
         dates.reverse()
         data['Date'] = dates
 
@@ -78,29 +75,33 @@ async def data_generator(input_data: dict, samples: int,
         birth_date = datetime.strptime(f'{end_date.year - age}-12-12', 
                                        '%Y-%m-%d').date()
         data['Age'] = data['Date'].apply(lambda x: (x - birth_date).days//365)
-
+        age_groups = [1 if age in range(18, 31) else 2 \
+                      if age in range(31, 46) else 3 \
+                        for age in data["Age"].to_list()]
+        
         # regressing health status
         health_status = [dictt.get(f"STAGE-{i+1}", None).get("Name") \
                          for i in range(stage_code) for j in range(adj_size)]
+        health_status.append(stage)
         data['Health_Status'] = health_status
 
         logger.info('Generating %s samples per class', adj_size)    
         for col in columns:
             limit = input_data.get(col, None)
             assert limit is not None
-            data[col] = generate_data(
-                            reference=dictt, 
+            data[col] = data_synthesizer(
+                            reference=disease_ref, 
                             parameter=col, 
-                            stage=stage_code, 
+                            stage_code=stage_code, 
                             thresh=limit, 
-                            size=adj_size
+                            adj_size=adj_size,
+                            age_groups=age_groups
                         )
-            data[col] = data[col].round(2)
+            data[col] = data[col].round(3)
 
-        df = pd.concat([data, pd.DataFrame(input_data, index=[data.shape[0]])])
         logger.info('Successfully generated data. Adding final touches')
         rearrange = ["Date", "Age", "Health_Status"] + columns
-        return df[rearrange].to_dict(orient='index')
+        return data[rearrange].to_dict(orient='index')
     except Exception as e:
         logger.exception(e)
         raise e
