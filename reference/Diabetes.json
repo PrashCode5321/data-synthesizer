@@ -12,7 +12,8 @@
                     "HDL": {"mean": 59.6, "std": 19.6},
                     "LDL": {"mean": 96.4, "std": 26.8},
                     "VLDL": {"mean": 16.04, "std": 1.13},
-                    "BMI": {"mean": 19.6, "std": 4.6}
+                    "BMI": {"mean": 19.6, "std": 4.6},
+                    "IR": {"mean": 2.0, "std": 0.7}
                 },
             
                 "STAGE-2": {
@@ -27,7 +28,8 @@
                     "HDL": {"mean": 55.25, "std": 20.25},
                     "LDL": {"mean": 99.4, "std": 26.8},
                     "VLDL": {"mean": 20.8, "std": 3.06},
-                    "BMI": {"mean": 21.6, "std": 6.05}
+                    "BMI": {"mean": 21.6, "std": 6.05},
+                    "IR": {"mean": 3.0, "std": 1.1}
                 },
             
                 "STAGE-3": {
@@ -42,7 +44,8 @@
                     "HDL": {"mean": 50.9, "std": 20.9},
                     "LDL": {"mean": 102.4, "std": 26.8},
                     "VLDL": {"mean": 30, "std": 5},
-                    "BMI": {"mean": 23.6, "std": 7.5}
+                    "BMI": {"mean": 23.6, "std": 7.5},
+                    "IR": {"mean": 3.9, "std": 2}
                 }
         },
     
@@ -59,7 +62,8 @@
                     "HDL": {"mean": 55.2, "std": 19.6},
                     "LDL": {"mean": 100.2, "std": 29},
                     "VLDL": {"mean": 16.04, "std": 1.13},
-                    "BMI": {"mean": 21.4, "std": 5.1}
+                    "BMI": {"mean": 21.4, "std": 5.1},
+                    "IR": {"mean": 2.2, "std": 0.7}
                 },
             
                 "STAGE-2": {
@@ -74,7 +78,8 @@
                     "HDL": {"mean": 51.75, "std": 20.3},
                     "LDL": {"mean": 105.5, "std": 31.4},
                     "VLDL": {"mean": 20.8, "std": 3.06},
-                    "BMI": {"mean": 23.65, "std": 6.6}
+                    "BMI": {"mean": 23.65, "std": 6.6},
+                    "IR": {"mean": 2.7, "std": 0.9}
                 },
                 
                 "STAGE-3": {
@@ -89,7 +94,8 @@
                     "HDL": {"mean": 48.3, "std": 21},
                     "LDL": {"mean": 110.8, "std": 33.8},
                     "VLDL": {"mean": 30, "std": 5},
-                    "BMI": {"mean": 25.9, "std": 8.1}
+                    "BMI": {"mean": 25.9, "std": 8.1},
+                    "IR": {"mean": 3.3, "std": 1.5}
                 }
         },
         
@@ -106,7 +112,8 @@
                     "HDL": {"mean": 52.8, "std": 12.84},
                     "LDL": {"mean": 107.5, "std": 27.48},
                     "VLDL": {"mean": 16.04, "std": 1.13},
-                    "BMI": {"mean": 23.39, "std": 2.59}
+                    "BMI": {"mean": 23.39, "std": 2.59},
+                    "IR": {"mean": 2.2, "std": 0.7}
                 },
             
                 "STAGE-2": {
@@ -121,7 +128,9 @@
                     "HDL": {"mean": 50.28, "std": 12.88},
                     "LDL": {"mean": 110.43, "std": 29.59},
                     "VLDL": {"mean": 20.8, "std": 3.06},
-                    "BMI": {"mean": 24.24, "std": 2.71}
+                    "BMI": {"mean": 24.24, "std": 2.71},
+                    "IR": {"mean": 2.6, "std": 0.9}
+
                 },
             
                 "STAGE-3": {
@@ -136,7 +145,8 @@
                     "HDL": {"mean": 47.76, "std": 12.93},
                     "LDL": {"mean": 116.1, "std": 31.7},
                     "VLDL": {"mean": 30, "std": 5},
-                    "BMI": {"mean": 25.09, "std": 2.83}
+                    "BMI": {"mean": 25.09, "std": 2.83},
+                    "IR": {"mean": 3.1, "std": 1.1}
                 }
         }
     
