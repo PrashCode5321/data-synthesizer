@@ -79,7 +79,8 @@ def configure_distribution(mean: float, std: float, gradient: float, \
     except Exception as e:
         logger.exception(e)
         raise e
-    
+
+ 
 def data_synthesizer(reference: dict, parameter: str, 
                      age_groups: list, adj_size: int, 
                      stage_code: int, thresh: float) -> np.array:
@@ -159,7 +160,7 @@ def data_synthesizer(reference: dict, parameter: str,
                 sizes.reverse()
 
                 # iterate through each age groups's statistical parameters
-                values = []
+                values, lbs, ubs = [], [], []
                 for size, unique in zip(sizes, uniques):
                     params = reference.get(f"AGE GROUP-{unique}")\
                         .get(f"STAGE-{stage}").get(parameter)
@@ -180,6 +181,8 @@ def data_synthesizer(reference: dict, parameter: str,
                         f"grad: {gradient}")
                     logger.debug(''.join(log))
                     values.append(values1)
+                    lbs.append(lb)
+                    ubs.append(ub)
 
                 # join data generated using different age groups' statistics
                 values = np.concatenate(values)
@@ -188,13 +191,14 @@ def data_synthesizer(reference: dict, parameter: str,
                 # if the parameter progresses with disease progression
                 if gradient > 0:
                     data = np.concatenate([values, data])
-                    thresh = lb
+                    thresh = min(lbs)
                 
                 # if the parameter digresses with disease progression
                 else:
                     values = np.flip(values)
                     data = np.concatenate([values, data])
-                    thresh = ub
+                    thresh = max(ubs)
+                del lbs, ubs
         return data
     except Exception as e:
         logger.exception(e)
