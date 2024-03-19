@@ -31,21 +31,19 @@ async def data_generator(input_data: dict, samples: int,
     try:
         logger.info('Received request to generate synthetic data')
 
-        # fetching primary data
         logger.info('Retrieving information from request and references...')
 
+        # fetching primary data
         age = input_data.get("Age", random.randint(18, 65))
         stage = input_data.get("Health_Status", None)
         random_date = f'2024-{random.randint(1, 12)}-{random.randint(1, 28)}'
         end_date = input_data.get("Date", random_date)
         end_date = datetime.strptime(end_date, '%Y-%m-%d')
-                 
-        # determine the age group for fetching correct confidence intervals
-        path = f"reference\\{disease}.json"
         logger.info('Patient age is %s and current health status is %s', 
                     age, stage)
-        
-        # fetching confidence intervals of all parameters per stage
+                 
+        # fetching dictionary containing confidence intervals
+        path = f"reference\\{disease}.json"        
         with open(path) as f:
             disease_ref = json.load(f)
 
@@ -65,7 +63,7 @@ async def data_generator(input_data: dict, samples: int,
         columns.remove('Name')
         data = pd.DataFrame(columns=columns) 
                   
-        # regressing the dates with monthly freqeuncy
+        # regressing the dates with month-wise freqeuncy
         dates = [(end_date - timedelta(days=delta)).date() \
                  for delta in range(0, 30*(adj_size*stage_code+1), 30)]
         dates.reverse()
@@ -75,6 +73,8 @@ async def data_generator(input_data: dict, samples: int,
         birth_date = datetime.strptime(f'{end_date.year - age}-12-12', 
                                        '%Y-%m-%d').date()
         data['Age'] = data['Date'].apply(lambda x: (x - birth_date).days//365)
+
+        # mapping the age to age groups
         age_groups = [1 if age in range(18, 31) else 2 \
                       if age in range(31, 46) else 3 \
                         for age in data["Age"].to_list()]
@@ -87,8 +87,9 @@ async def data_generator(input_data: dict, samples: int,
 
         logger.info('Generating %s samples per class', adj_size)    
         for col in columns:
+            # for each parameter, using input data as threshold
             limit = input_data.get(col, None)
-            assert limit is not None
+            assert limit is not None, f"There is no data for {col} parameter."
             data[col] = data_synthesizer(
                             reference=disease_ref, 
                             parameter=col, 
