@@ -137,6 +137,7 @@ async def forecast(data_dict: dict) -> dict:
         logger.info('Received request to extrapolate for the given data')
 
         df = pd.DataFrame(list(data_dict.values()))
+        df['Date'] = pd.to_datetime(df['Date'], yearfirst=True)
         response = predict_diabetic_risk(data=df)
         
         logger.info('Successfully generated forecasts.')
