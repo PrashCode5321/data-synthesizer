@@ -43,6 +43,11 @@ async def data_generator(input_data: dict, samples: int,
                     age, stage)
                  
         # fetching dictionary containing confidence intervals
+        if not f"{disease}.json" in os.listdir("reference"):
+            log = f"Requested disease, {disease} is not listed."
+            logger.warning(log)
+            return {"status": "Request rejected", "reason": log}
+        
         path = f"reference\\{disease}.json"        
         with open(path) as f:
             disease_ref = json.load(f)
@@ -74,11 +79,18 @@ async def data_generator(input_data: dict, samples: int,
                                        '%Y-%m-%d').date()
         data['Age'] = data['Date'].apply(lambda x: (x - birth_date).days//365)
 
+        # samples generated cannot be greater than the age in months
+        log = (f"Requested {samples} samples is greater than ",
+               "number of months this person has been alive")
+        if (end_date.date() - birth_date).days//30 < samples:
+            logger.warning(''.join(log))
+            return {"status": "Request rejected", "reason": ''.join(log)}
+        
         # mapping the age to age groups
         age_groups = [1 if age in range(18, 31) else 2 \
                       if age in range(31, 46) else 3 \
                         for age in data["Age"].to_list()]
-        
+
         # regressing health status
         health_status = [dictt.get(f"STAGE-{i+1}", None).get("Name") \
                          for i in range(stage_code) for j in range(adj_size)]
