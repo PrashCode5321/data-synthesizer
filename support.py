@@ -27,6 +27,7 @@ def get_samples(lower_bound:float, upper_bound:float, mean:float, \
         # compute z score of the truncation limits
         z_score_low = (lower_bound - mean) /sd
         z_score_up = (upper_bound - mean) /sd
+
         # perform random sampling on the truncated normal distribution
         data = truncnorm.rvs(a=z_score_low, b=z_score_up, loc=mean, 
                              scale=sd, size=size)
@@ -65,7 +66,8 @@ def configure_distribution(mean: float, std: float, gradient: float, \
             lb = mean*0.2 if lb <= 0 else  lb
             ub = thresh if i == stage else mean + 1.5*std if \
                 ((mean + 1.5*std) < thresh) else thresh
-            lb = mean*0.1 if lb >= ub else lb
+            lb = ub*0.5 if lb >= ub else lb
+
         # if parameter digresses with disease progression
         else:
             lb = thresh if i == stage else mean - 1.5*std if \
@@ -73,6 +75,9 @@ def configure_distribution(mean: float, std: float, gradient: float, \
             lb = mean*0.2 if lb <= 0 else  lb
             ub = mean + 1.5*std if ((mean + 1.5*std) > thresh) \
                 else thresh + 2*std
+            lb = ub*0.5 if lb >= ub else lb
+        
+        # perform random sampling on this truncated distribution
         new_values = get_samples(lower_bound=lb, upper_bound=ub, \
                                  mean=mean, sd=std, size=size)
         return new_values, lb, ub
@@ -104,13 +109,14 @@ def data_synthesizer(reference: dict, parameter: str,
     """    
     try:
         # fetching all mean values across stages for each age group
-        y = {key: [ref.get(f"STAGE-{i+1}", None).get(parameter, None)\
-                   .get('mean', None) for i in range(stage_code)] \
-                    for key, ref in reference.items()}
+        y = {key: [ref.get(parameter, None).get('mean', None) \
+                    for ref in stage_ref.values()] \
+                        for key, stage_ref in reference.items()}
         
         # computing gradients of the means for each age group
-        grads = {k: np.polyfit(x=np.arange(1, stage_code+1), y=v, deg=1)[0]\
-                  for k, v in y.items()}
+        total_stages = len(next(iter(y.values())))
+        grads = {k: round(np.polyfit(x=np.arange(1, total_stages+1), y=v, \
+                                     deg=1)[0], 2) for k, v in y.items()}
         
         data = np.array([thresh])
         for stage in range(stage_code, 0, -1):
@@ -141,6 +147,7 @@ def data_synthesizer(reference: dict, parameter: str,
                 if gradient > 0:
                     data = np.concatenate([values, data])
                     thresh = lb
+                
                 # if the parameter digresses with disease progression
                 else:
                     values = np.flip(values)

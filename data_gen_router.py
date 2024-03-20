@@ -1,7 +1,5 @@
 from forecast import predict_diabetic_risk
-from datetime import datetime, timedelta
 from support import data_synthesizer
-from datetime import datetime
 from fastapi import FastAPI
 import pandas as pd
 import logging
@@ -31,16 +29,18 @@ async def data_generator(input_data: dict, samples: int,
     try:
         logger.info('Received request to generate synthetic data')
 
-        logger.info('Retrieving information from request and references...')
-
         # fetching primary data
         age = input_data.get("Age", random.randint(18, 65))
         stage = input_data.get("Health_Status", None)
         random_date = f'2024-{random.randint(1, 12)}-{random.randint(1, 28)}'
         end_date = input_data.get("Date", random_date)
-        end_date = datetime.strptime(end_date, '%Y-%m-%d')
-        logger.info('Patient age is %s and current health status is %s', 
-                    age, stage)
+        
+        # samples generated cannot be greater than the age in months
+        log = (f"Requested {samples} samples is greater than ",
+               "number of months this person has been alive")
+        if age*12 < samples:
+            logger.warning(''.join(log))
+            return {"status": "Request rejected", "reason": ''.join(log)}
                  
         # fetching dictionary containing confidence intervals
         if not f"{disease}.json" in os.listdir("reference"):
@@ -48,7 +48,11 @@ async def data_generator(input_data: dict, samples: int,
             logger.warning(log)
             return {"status": "Request rejected", "reason": log}
         
+        logger.info('Patient age is %s and current health status is %s', 
+                    age, stage)
+        
         path = f"reference\\{disease}.json"        
+        logger.info('Retrieving information from request and references...')
         with open(path) as f:
             disease_ref = json.load(f)
 
@@ -69,23 +73,20 @@ async def data_generator(input_data: dict, samples: int,
         data = pd.DataFrame(columns=columns) 
                   
         # regressing the dates with month-wise freqeuncy
-        dates = [(end_date - timedelta(days=delta)).date() \
-                 for delta in range(0, 30*(adj_size*stage_code+1), 30)]
-        dates.reverse()
-        data['Date'] = dates
+        data['Date'] = pd.date_range(
+                                end=end_date, 
+                                periods=adj_size*stage_code+1,
+                                freq=pd.DateOffset(months=1), 
+                                inclusive='both'
+                            )
+        data['Date'] = data['Date'].apply(lambda x: x.date())
 
         # regressing the age 
-        birth_date = datetime.strptime(f'{end_date.year - age}-12-12', 
-                                       '%Y-%m-%d').date()
-        data['Age'] = data['Date'].apply(lambda x: (x - birth_date).days//365)
+        birth_date = pd.DatetimeIndex([end_date]) - pd.DateOffset(years=age)
+        data['Age'] = data['Date'].apply(
+                            lambda x: int(x.year - birth_date[0].year)
+                        )
 
-        # samples generated cannot be greater than the age in months
-        log = (f"Requested {samples} samples is greater than ",
-               "number of months this person has been alive")
-        if (end_date.date() - birth_date).days//30 < samples:
-            logger.warning(''.join(log))
-            return {"status": "Request rejected", "reason": ''.join(log)}
-        
         # mapping the age to age groups
         age_groups = [1 if age in range(18, 31) else 2 \
                       if age in range(31, 46) else 3 \
@@ -110,7 +111,7 @@ async def data_generator(input_data: dict, samples: int,
                             adj_size=adj_size,
                             age_groups=age_groups
                         )
-            data[col] = data[col].round(3)
+            data[col] = data[col].round(4)
 
         logger.info('Successfully generated data. Adding final touches')
         rearrange = ["Date", "Age", "Health_Status"] + columns
