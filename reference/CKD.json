@@ -1,7 +1,7 @@
 {
     "AGE GROUP-1": {
                     "STAGE-1": {
-                        "Name": "Stage 1",
+                        "Name": "STAGE-1",
                         "Blood Urea": {"mean": 90, "std": 0.16},
                         "SC": {"mean": 0.84, "std": 0.18},
                         "Albumin": {"mean": 3.9, "std": 0.6},
@@ -86,7 +86,7 @@
                     
     "AGE GROUP-2": {
                 "STAGE-1": {
-                    "Name": "Stage 1",
+                    "Name": "STAGE-1",
                     "Blood Urea": {"mean": 90, "std": 0.16},
                     "SC": {"mean": 0.84, "std": 0.18},
                     "Albumin": {"mean": 3.9, "std": 0.6},
@@ -171,7 +171,7 @@
     
     "AGE GROUP-3": {
                 "STAGE-1": {
-                    "Name": "Stage 1",
+                    "Name": "STAGE-1",
                     "Blood Urea": {"mean": 90, "std": 0.16},
                     "SC": {"mean": 0.84, "std": 0.18},
                     "Albumin": {"mean": 3.9, "std": 0.6},

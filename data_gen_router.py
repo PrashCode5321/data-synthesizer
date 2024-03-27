@@ -121,11 +121,14 @@ async def data_generator(input_data: dict, samples: int,
         raise e
 
 @app.post('/forecast')
-async def forecast(data_dict: dict) -> dict:
+async def forecast(disease: str, target: str, n: int, data: dict) -> dict:
     """Generates forecasts for the given historical data.\n
 
     Args:\n
-        `data_dict` (dict): historical data\n
+        `disease` (str): name of the disease\n
+        `target` (str): name of the column to forecast\n
+        `n` (int): number of forecasts to generate\n
+        `data` (dict): historical data\n
 
     Raises:\n
         `e`: generic errors/exceptions\n
@@ -136,10 +139,19 @@ async def forecast(data_dict: dict) -> dict:
     try:
         logger.info('Received request to extrapolate for the given data')
 
-        df = pd.DataFrame(list(data_dict.values()))
-        df['Date'] = pd.to_datetime(df['Date'], yearfirst=True)
-        response = predict_diabetic_risk(data=df)
+        df = pd.DataFrame(list(data.values()))
+        assert not df.empty, "The given dataframe is empty."
+
+        df["Date"] = pd.to_datetime(df["Date"], yearfirst=True)
+
+        if not f"{disease}_forecaster.pkl" in os.listdir("models"):
+            log = f"Requested disease, {disease} is not listed."
+            logger.warning(log)
+            return {"status": "Request rejected", "reason": log}
         
+        if disease == "Diabetes":
+            response = predict_diabetic_risk(data=df, target="HbA1c", n=20)
+
         logger.info('Successfully generated forecasts.')
         return response.to_dict(orient='index')
     except Exception as e:

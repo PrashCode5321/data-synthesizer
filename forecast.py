@@ -1,8 +1,11 @@
-import pandas as pd
-import math
-from prophet import Prophet
+from darts.models import XGBModel, NaiveEnsembleModel
+from darts.metrics import mape, ope
+from darts import TimeSeries
 import data_gen_logger
+import pandas as pd
+import numpy as np
 import logging
+import os
 
 logger = logging.getLogger('data_gen')
 
@@ -23,74 +26,53 @@ def categorize_risk(y_value):
         logger.exception(e)
         raise e
             
-def predict_diabetic_risk(data: pd.DataFrame) -> pd.DataFrame:
+def predict_diabetic_risk(data: pd.DataFrame, 
+                          target: str, n: int) -> pd.DataFrame:
     """Generates forecast for the given `data`.
 
     Args:
         `data` (pd.DataFrame): historical data
+        `target` (str): name of the column to forecast
+        `n` (int): number of forecasts to generate
+
+    Raises: 
+        `e`: generic errors/exceptions
 
     Returns:
         `pd.DataFrame`: dataset with the forecasts
     """    
     try:
-        logger.info('Generating forecasts for the provided dataset...')
-        data['Date'] = pd.to_datetime(data['Date'])
-        regressor_columns = [col for col in data.columns if col not in ['Date', 'Health_Status', 'HbA1c']]
-        data = data[['Date', 'HbA1c'] + regressor_columns].rename(columns={'Date': 'ds', 'HbA1c': 'y'})
-
-        future_df = pd.DataFrame()  # DataFrame to store future predicted values
-
-        for column in data.columns[1:]:  # Loop through all columns except 'ds'
-            # Prepare data for Prophet
-            df = data[['ds', column]].rename(columns={'ds': 'ds', column: 'y'})
-
-            # Create and fit Prophet model
-            model = Prophet()
-            model.fit(df)
-
-            # Make future predictions
-            future = model.make_future_dataframe(periods=200,freq='M')  # Change periods as needed
-            forecast = model.predict(future)
-
-            # Extract future predicted values and append to future_df
-            future_values = forecast[['ds', 'yhat']].rename(columns={'ds': 'ds', 'yhat': column})
-            future_df = pd.concat([future_df, future_values[column]], axis=1)
-
-            # Append the dates from the forecast
-            future_df['ds'] = forecast['ds']
-
-            # Print or use future_df as needed
-            # print(future_df)
-        future_df.drop('y',axis=1,inplace=True)
-        model = Prophet()
-        model.add_regressor('Age')
-        model.add_regressor('Urea')
-        model.add_regressor('Cr')
-        model.add_regressor('HDL')
-        model.add_regressor('BGL')
-        model.add_regressor('Chol')
-        model.add_regressor('TG')
-        model.add_regressor('LDL')
-        model.add_regressor('VLDL')
-        model.add_regressor('BMI')
-
-
-        model.fit(data)
-        print(future_df)
-        forecast = model.predict(future_df)
-                    
-        future_df['y'] = forecast['yhat']
-        future_df['Risk_Category'] = future_df['y'].apply(categorize_risk)
-        future_df['Age'] = future_df['Age'].apply(lambda x: math.floor(x))
-        new_columns_order = ['ds'] + [col for col in future_df.columns if col != 'ds']
-        future_df = future_df[new_columns_order]
+        logger.info("Received request to generate forecasts for Diabetes.")
         
-        type_cast = ['Age', 'Urea', 'Cr', 'BGL', 'Chol', 'TG', 'HDL', 'LDL', 'VLDL', 'BMI', 'y']
-        future_df[type_cast] = future_df[type_cast].round(2)
-        future_df["ds"] = future_df["ds"].dt.date
-        future_df.rename(columns={'ds':'Date', 'y':'HbA1c'}, inplace=True)
-        logger.info('Successfully generated forecasts')
-        return future_df
+        # performing some pre-processing and converting data to timeseries
+        data[target] = data[target].apply(lambda x: np.sqrt(x))
+        data.set_index(keys=["Date"], verify_integrity=True, inplace=True)
+        ts = TimeSeries.from_series(data[target], 
+                                    freq=pd.DateOffset(months=1))
+        assert len(ts) > 0, "Timeseries has no data"
+
+        if not f"Diabetes_forecaster.pkl" in os.listdir("models"):
+            log = f"Requested disease, Diabetes_forecaster is not listed."
+            logger.warning(log)
+            return {"status": "Request rejected", "reason": log}
+        
+        # loading the Diabetes forecasting model and forecasting
+        logger.info('Generating forecasts for the provided dataset...')
+        path = os.path.join("models", "Diabetes_forecaster.pkl")
+        model = NaiveEnsembleModel.load(path)
+        preds = model.predict(n=len(ts), series=ts)
+
+        # post-processing the forecasting data
+        columns = ["Date", "Data"]
+        df = pd.DataFrame(columns=columns)
+        df["Date"], df["Data"] = preds.time_index, np.round(preds.values(), 3)
+        df['Date'] = df['Date'].apply(lambda x: x.date())
+        df["Data"] = df["Data"].transform(lambda x: x**2)
+        df["Data"] = df["Data"].round(2)
+        # df["Status"] = df["Data"].apply(lambda x: categorize_risk(x))
+
+        logger.info(f"Successfully completed forecasting for {target} column")
+        return df
     except Exception as e:
          logger.exception(e)
          raise e
